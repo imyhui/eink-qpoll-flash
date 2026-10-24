@@ -4,6 +4,19 @@
 
 > 整套代码是和 **Claude Code**（Anthropic 的命令行 AI 编程工具）结对写出来的——从排查设备、设计方案、逐版实现到真机联调，全程人机协作完成。
 
+## 效果
+
+<table>
+<tr>
+<td align="center"><b>实拍：刷好的墨水屏壳</b></td>
+<td align="center"><b>App 界面（刷新完成）</b></td>
+</tr>
+<tr>
+<td><img src="docs/result.jpeg" width="340" alt="实拍效果"></td>
+<td><img src="docs/ui.png" width="260" alt="App 界面"></td>
+</tr>
+</table>
+
 ## 它解决什么问题
 
 华为四色墨水屏壳只认一帧 **7-bit `0x7A`** 的寻卡信号（NXP 控制器的私有 **Q-Poll**，NCI tech `0x71`）；而标准 Android NFC 栈只发 NFC-A（`0x00`），于是普通手机"看不到"这个壳。
