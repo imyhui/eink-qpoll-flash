@@ -1,0 +1,24 @@
+# NOTICE — eink-qpoll-flash
+
+本项目为个人、非商业用途的研究性工具，用于在已 root 的非华为手机上驱动华为 552×768
+四色墨水屏手机壳刷图。**仅限 PolyForm Noncommercial 1.0.0 许可下的非商业用途。**
+
+## 复用与署名
+
+- 墨水屏协议（D1/D8/D3/D4/DE）、四色点阵布局、A0/A1 行映射、LZO1X literal 封包：
+  改编自 **kur0neko/huawei-epd-pn532**（https://gitee.com/kur0neko/huawei-epd-pn532），
+  经由 ZhaoGY-N/huawei-nfc-eink-android-app 的 Java 实现（`PanelProtocol`/`PanelType`/
+  `ImageRaster`/`ImageBlocks`/`PanelImage`，本项目直接复用并改包名）。
+  **Required Notice: Copyright (c) 2026 kur0neko** — 见随附 `LICENSE`（PolyForm Noncommercial 1.0.0）。
+
+- `assets/nfcq-hook.js`（注入 com.android.nfc 的 Q-Poll NCI 桥接脚本）：
+  来自 **nfc-qpoll-ksu**（MIT）。
+
+- `assets/frida-inject`（由 `frida-inject-17.24.0-android-arm64.xz` 解压）：
+  frida-gadget/frida 官方发行，**wxWindows Library Licence** —— 见 `assets/FRIDA-COPYING.txt`。
+
+## 边界
+
+- 仅在 Redmi Note 12 Turbo（marble / NXP SN110T / Android 15）这一路径验证。
+- 刷图协议只对 552×768 四色屏有效；A0/A1 需用户按实体屏手选。
+- Hook 注入需 root；刷图本身不需 root。

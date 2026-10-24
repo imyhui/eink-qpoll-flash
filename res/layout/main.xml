@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="12dp">
+
+    <TextView android:id="@+id/tvStatus" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:textColor="#71E1C5" android:textSize="14sp"
+        android:text="① 注入 Hook（需 Root，每开机一次）② 选图 ③ 贴壳刷图" />
+
+    <RadioGroup android:id="@+id/rgPanel" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp" android:orientation="horizontal">
+        <RadioButton android:id="@+id/rbA0" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:textColor="#D0D8E0"
+            android:checked="true" android:text="A0（14 Pro）" />
+        <RadioButton android:id="@+id/rbA1" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:textColor="#D0D8E0"
+            android:layout_marginStart="24dp" android:text="A1（15 Pro）" />
+    </RadioGroup>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button android:id="@+id/btnInject" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="① 注入Hook" />
+        <Button android:id="@+id/btnPick" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="② 选图" />
+    </LinearLayout>
+    <Button android:id="@+id/btnFlash" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="③ 刷图" />
+
+    <TextView android:id="@+id/tvSignal" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:gravity="center" android:textSize="16sp"
+        android:textStyle="bold" android:padding="8dp" android:layout_marginTop="4dp"
+        android:singleLine="true" android:maxLines="1" android:ellipsize="end"
+        android:background="#1A2630" android:textColor="#9FB0BE" android:text="信号：贴上壳子自动检测" />
+
+    <LinearLayout android:id="@+id/rowPower" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_marginTop="2dp" android:visibility="gone">
+        <Button android:id="@+id/btnPowerDown" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="上电−" />
+        <TextView android:id="@+id/tvPower" android:layout_width="0dp" android:layout_weight="2"
+            android:layout_height="wrap_content" android:gravity="center" android:textColor="#D0D8E0"
+            android:text="上电等待 6.0s（供电不足时调大）" />
+        <Button android:id="@+id/btnPowerUp" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="上电+" />
+    </LinearLayout>
+
+    <ProgressBar android:id="@+id/pbFlash" style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="2dp" android:visibility="gone" android:indeterminate="true" />
+    <Button android:id="@+id/btnCopyLog" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="复制日志" />
+
+    <ImageView android:id="@+id/ivPreview" android:layout_width="match_parent"
+        android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp"
+        android:background="#10171D" android:scaleType="fitCenter" android:contentDescription="预览" />
+
+    <ScrollView android:id="@+id/logScroll" android:layout_width="match_parent"
+        android:layout_height="132dp" android:layout_marginTop="8dp" android:background="#0C1116">
+        <TextView android:id="@+id/tvLog" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:fontFamily="monospace"
+            android:textColor="#9FB0BE" android:textSize="11sp" android:padding="6dp" android:text="" />
+    </ScrollView>
+</LinearLayout>
