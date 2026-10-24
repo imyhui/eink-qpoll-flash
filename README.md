@@ -4,6 +4,8 @@
 
 > 整套代码是和 **Claude Code**（Anthropic 的命令行 AI 编程工具）结对写出来的——从排查设备、设计方案、逐版实现到真机联调，全程人机协作完成。
 
+> 📖 **手把手图文教程：[docs/TUTORIAL.md](docs/TUTORIAL.md)**
+
 ## 效果
 
 <table>
