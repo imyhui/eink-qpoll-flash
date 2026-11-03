@@ -38,13 +38,14 @@ public final class MainActivity extends Activity {
     private ImageView ivPreview;
     private TextView tvStatus, tvLog, tvSignal, tvPower;
     private ScrollView logScroll;
-    private RadioButton rbA0;
+    private RadioButton rbA0, rbGold, rbTexture, rbLevel, rbInk;
     private Button btnFlash, btnInject;
     private ProgressBar pbFlash;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService exec = Executors.newSingleThreadExecutor();
 
     private Bitmap source;
+    private volatile int[] cachedFittedPixels;
     private volatile byte[] packed;
     private volatile Tag lastTag;
     private volatile int powerMs = 6000;
@@ -61,6 +62,10 @@ public final class MainActivity extends Activity {
         tvPower = find("tvPower");
         logScroll = find("logScroll");
         rbA0 = find("rbA0");
+        rbGold = find("rbGold");
+        rbTexture = find("rbTexture");
+        rbLevel = find("rbLevel");
+        rbInk = find("rbInk");
         pbFlash = find("pbFlash");
 
         nfc = NfcAdapter.getDefaultAdapter(this);
@@ -85,8 +90,11 @@ public final class MainActivity extends Activity {
         });
         btnPick.setOnClickListener(v -> pickImage());
         btnPick.setOnLongClickListener(v -> {
-            exec.submit(() -> { source = PanelImage.testPattern(); refreshPreview();
-                log("已载入定位测试图（长按『选图』）"); });
+            exec.submit(() -> {
+                source = PanelImage.testPattern();
+                refitAndPreview();
+                log("已载入定位测试图（长按『选图』）");
+            });
             return true;
         });
         btnFlash.setOnClickListener(v -> onFlashClick());
@@ -95,6 +103,8 @@ public final class MainActivity extends Activity {
         ((Button) find("btnPowerDown")).setOnClickListener(v -> adjustPower(-1000));
         updatePowerLabel();
         ((android.widget.RadioGroup) find("rgPanel"))
+                .setOnCheckedChangeListener((g, id) -> refreshPreview());
+        ((android.widget.RadioGroup) find("rgStyle"))
                 .setOnCheckedChangeListener((g, id) -> refreshPreview());
         final android.view.View rowPower = find("rowPower");
         tvStatus.setOnLongClickListener(v -> {
@@ -156,22 +166,40 @@ public final class MainActivity extends Activity {
             Uri uri = data.getData();
             log("加载图片…");
             exec.submit(() -> {
-                try { source = PanelImage.load(getContentResolver(), uri); refreshPreview(); }
-                catch (Exception e) { log("加载图片失败：" + e); }
+                try {
+                    source = PanelImage.load(getContentResolver(), uri);
+                    refitAndPreview();
+                } catch (Exception e) { log("加载图片失败：" + e); }
             });
         }
+    }
+
+    private int getSelectedMode() {
+        if (rbGold != null && rbGold.isChecked()) return ReinkRaster.MODE_GOLD;
+        if (rbLevel != null && rbLevel.isChecked()) return ReinkRaster.MODE_LEVEL;
+        if (rbInk != null && rbInk.isChecked()) return ReinkRaster.MODE_INK;
+        return ReinkRaster.MODE_TEXTURE;
+    }
+
+    private void refitAndPreview() {
+        if (source == null) return;
+        cachedFittedPixels = PanelImage.fittedPixels(source, 0, false);
+        refreshPreview();
     }
 
     private void refreshPreview() {
         if (source == null) return;
         final String pt = rbA0.isChecked() ? "A0" : "A1";
+        final int mode = getSelectedMode();
         exec.submit(() -> {
             try {
-                PanelImage.Prepared prep =
-                        PanelImage.prepare(source, 0, false, true, 1, false, 128, false, pt);
+                if (cachedFittedPixels == null) {
+                    cachedFittedPixels = PanelImage.fittedPixels(source, 0, false);
+                }
+                PanelImage.Prepared prep = PanelImage.prepare(cachedFittedPixels, pt, mode);
                 packed = prep.packed;
                 main.post(() -> ivPreview.setImageBitmap(prep.preview));
-                log("已生成预览（" + pt + "）");
+                log("已生成高清预览 [" + ReinkRaster.MODES[mode] + "] (" + pt + ") · 非白占比: " + prep.density + "%");
             } catch (Exception e) { log("预览失败：" + e); }
         });
     }

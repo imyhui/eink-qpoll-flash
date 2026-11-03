@@ -106,6 +106,100 @@ public final class PanelProtocol {
         else {stream.write(0);int rest=raw.length-18;while(rest>255){stream.write(0);rest-=255;}stream.write(rest);}
         stream.write(raw,0,raw.length);stream.write(0x11);stream.write(0);stream.write(0);return stream.toByteArray();
     }
+    /**
+     * 真压缩 LZO1X 编码器（贪心 + 哈希链匹配），替代仅打包不压缩的 literalLzo。
+     * 大片纯白/纯色背景大幅缩减分包数（可由 476 包降至 100~200 包），大幅提升传输速度降低掉电风险。
+     * 无法压缩时自动回退为 literalLzo。
+     */
+    public static byte[] compressedLzo(byte[] raw) {
+        if(raw.length<1||raw.length>2000)throw new IllegalArgumentException("LZO 块尺寸错误");
+        LzoWriter writer=new LzoWriter(raw.length+raw.length/8+80);
+        int[] head=new int[1<<14],prev=new int[raw.length];
+        java.util.Arrays.fill(head,-1);java.util.Arrays.fill(prev,-1);
+        int literalStart=0,pos=0,lastMatch=-1;
+        while(pos+2<raw.length) {
+            int bestPos=-1,bestLength=0;
+            if(pos>0) {
+                int key=hash(raw,pos),candidate=head[key],visited=0;
+                while(candidate>=0&&pos-candidate<=0x4000&&visited++<64) {
+                    int max=raw.length-pos,length=0;
+                    while(length<max&&raw[candidate+length]==raw[pos+length])length++;
+                    if(length>bestLength||(length==bestLength&&length>=3&&pos-candidate<pos-bestPos)) {
+                        bestLength=length;bestPos=candidate;
+                    }
+                    if(bestLength==max)break;
+                    candidate=prev[candidate];
+                }
+            }
+            int current=pos;
+            int key=hash(raw,current);
+            prev[current]=head[key];head[key]=current;
+            if(bestLength>=3) {
+                writer.literal(raw,literalStart,current-literalStart,lastMatch);
+                int offset=current-bestPos;
+                lastMatch=writer.match(bestLength,offset);
+                for(int insert=current+1;insert<current+bestLength&&insert+2<raw.length;insert++) {
+                    key=hash(raw,insert);
+                    prev[insert]=head[key];head[key]=insert;
+                }
+                pos=current+bestLength;
+                literalStart=pos;
+            } else {
+                pos++;
+            }
+        }
+        writer.literal(raw,literalStart,raw.length-literalStart,lastMatch);
+        writer.write(0x11);writer.write(0);writer.write(0);
+        byte[] literal=literalLzo(raw);
+        return writer.size<literal.length?writer.toByteArray():literal;
+    }
+    private static int hash(byte[] data,int pos) {
+        int value=((data[pos]&255)<<16)|((data[pos+1]&255)<<8)|(data[pos+2]&255);
+        return ((value*0x9E3779B1)>>>18)&((1<<14)-1);
+    }
+    private static final class LzoWriter {
+        private final byte[] buffer;
+        private int size;
+        LzoWriter(int capacity){buffer=new byte[capacity];}
+        void write(int value){buffer[size++]=(byte)value;}
+        void append(byte[] raw,int offset,int length){
+            System.arraycopy(raw,offset,buffer,size,length);size+=length;
+        }
+        void literal(byte[] raw,int offset,int length,int lastMatch) {
+            if(length<=0)return;
+            if(length<=3&&lastMatch>=0) {
+                buffer[lastMatch]|=(byte)length;
+            } else if(size==0&&length<=238) {
+                write(17+length);
+            } else if(length<=18) {
+                write(length-3);
+            } else {
+                write(0);zeroLength(length-18);
+            }
+            append(raw,offset,length);
+        }
+        int match(int length,int offset) {
+            if(offset<1)throw new IllegalArgumentException("LZO 偏移错误");
+            if(length<=8&&offset<=0x0800) {
+                offset--;
+                write(((length-1)<<5)|((offset&7)<<2));
+                write(offset>>3);
+            } else {
+                offset--;
+                if(length<=33)write(0x20|(length-2));
+                else {
+                    write(0x20);zeroLength(length-33);
+                }
+                write(offset<<2);write(offset>>6);
+            }
+            return size-2;
+        }
+        private void zeroLength(int length) {
+            while(length>255){write(0);length-=255;}
+            write(length);
+        }
+        byte[] toByteArray(){return Arrays.copyOf(buffer,size);}
+    }
     public static byte[] d3(byte[] compressed,int block,int sub) {
         if(block<0||block>255||sub<0||sub>255||sub*250>=compressed.length)throw new IllegalArgumentException("D3 编号错误");
         int offset=sub*250,count=Math.min(250,compressed.length-offset);
@@ -160,12 +254,14 @@ public final class PanelProtocol {
         if(initial.topDown()!=rechecked.topDown())throw new IllegalArgumentException("扫描配置在会话中发生变化，未传图");
         control.event("STAGE","uploading|正在传输图片，请保持贴合");
         int confirmed=0,total=0;
-        for(int offset=0;offset<packed.length;offset+=2000) {
-            int n=literalLzo(Arrays.copyOfRange(packed,offset,Math.min(offset+2000,packed.length))).length;
-            total+=(n+249)/250;
-        }
+        byte[][] blocks=new byte[(packed.length+1999)/2000][];
         for(int block=0,offset=0;offset<packed.length;block++,offset+=2000) {
-            byte[] compressed=literalLzo(Arrays.copyOfRange(packed,offset,Math.min(offset+2000,packed.length)));
+            blocks[block]=compressedLzo(Arrays.copyOfRange(packed,offset,Math.min(offset+2000,packed.length)));
+            total+=(blocks[block].length+249)/250;
+        }
+        control.event("TIMING","传输负载 "+total+" 包（字面量方案恒为 476 包）");
+        for(int block=0;block<blocks.length;block++) {
+            byte[] compressed=blocks[block];
             for(int sub=0;sub*250<compressed.length;sub++) {
                 exchange(d3(compressed,block,sub),"D3 块 "+block+" / 包 "+sub,5000,true);
                 confirmed++;
