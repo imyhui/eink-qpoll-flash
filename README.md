@@ -52,8 +52,10 @@ adb install -r build/eink-qpoll-flash-debug.apk
 ## 使用
 
 1. **① 注入 Hook**：点一下并授权 `su`。成功后按钮显示「✓ 已Hook」，并会自动重启一次 NFC 寻卡使其立即生效。**每次开机/`com.android.nfc` 重启后需重注入一次**。
-2. **选屏幕类型**：**A0（华为/荣耀 14 Pro 壳）** 或 **A1（15 Pro 壳）**。选错图像会左右错位/对称，换一个即可。
-3. **② 选图**：选一张图，上方显示四色预览（黑/白/黄/红）。长按「选图」可载入定位测试图。
+2. **选屏幕类型与出图风格**：
+   - 屏幕类型：**A0（华为/荣耀 14 Pro 壳）** 或 **A1（15 Pro 壳）**。
+   - 高清风格：**质感（推荐）**（LOMO 调色 + Atkinson，大片推白，人脸与发丝最清晰锐利）、**鎏金**（原图 + Atkinson，细节最全）、**色阶**（纯量化不抖动）、**水墨**（灰阶 + Atkinson，素描感）。
+3. **② 选图**：选一张图，上方即时生成所选风格的高清四色预览，换风格或换屏幕类型可秒级即时重新渲染。长按「选图」可载入定位测试图。
 4. **贴壳 → ③ 刷图**：把壳子贴到手机 NFC 区域。贴上后顶部**信号条**会自动显示连接质量（仅代表通信，不代表供电是否够刷）。日志出现 `D1/D3/D4/DE`、最后弹「刷新完成 ✅」即成功。
 5. 刷成功后换图可**直接再点③**，无需拿开；只有掉电/离场才需重新贴。
 
@@ -71,6 +73,7 @@ adb install -r build/eink-qpoll-flash-debug.apk
 | --- | --- | --- |
 | 刷图协议（D1/D8/D3/D4/DE）、四色点阵布局、A0/A1 行映射、LZO1X literal | [kur0neko/huawei-epd-pn532](https://gitee.com/kur0neko/huawei-epd-pn532) | PolyForm Noncommercial 1.0.0 |
 | 协议/图像的 Java 实现（`PanelProtocol`/`PanelType`/`ImageRaster`/`ImageBlocks`/`PanelImage`，本项目直接改编） | [ZhaoGY-N/huawei-nfc-eink-android-app](https://github.com/ZhaoGY-N/huawei-nfc-eink-android-app) | 同上 |
+| 高清出图算法（Atkinson抖动、LOMO色彩矩阵、Redmean最近色、面积平均降采样、真 LZO1X 压缩） | [yhl88890/qpoll-lite](https://github.com/yhl88890/qpoll-lite) | PolyForm Noncommercial 1.0.0 |
 | `frida-inject` 自注入思路、工程脚手架 | [wiwiwei/ink-nfc-lab](https://github.com/wiwiwei/ink-nfc-lab) | PolyForm Noncommercial 1.0.0 |
 | NCI `0x71` Q-Poll 桥接脚本 `assets/nfcq-hook.js` | [nfc-qpoll-ksu](https://github.com/Freeze-Over/nfc-qpoll-ksu) | MIT |
 | `frida-inject`（17.24.0 arm64 官方发行） | [frida/frida](https://github.com/frida/frida) | wxWindows Library Licence |
